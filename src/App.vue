@@ -1,6 +1,6 @@
 <template>
 
-  <div class="bg-darkBg">
+  <div class="bg-darkBg h-screen">
 
     <HomeView />
 

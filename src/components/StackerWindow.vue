@@ -1,69 +1,90 @@
 <template>
 
-  <div class="flex justify-center">
-    <span class="text-white text-2xl font-bold">STACKER</span>
-  </div>
-
-  <div id="stackWindow" class="pt-0.5 pl-0.5 bg-stackGap border-stackBack border">
-    <div class="">
-
-      <div :id="'grid-' + (y - 1)" v-for="y in height" :key="y" class="grid pb-0.5" :class="getColWidth()">
-        <div class="bg-stackBack" :class="getCubeSize()" v-for="x in width" :key="x" :id="(y - 1) + '-' + x"/>
-      </div>
-
-    </div>
-  </div>
-
-
-  <div id="stackButt" class="p-3">
-
-    <div v-if="showEndScreen" :key="showEndScreen">
+  <div :key="resetWindow">
+    <div id="stackWindow">
       <div class="flex justify-center">
-        <span class="text-white text-3xl font-bold">{{ endText }}</span>
+        <span class="text-white text-2xl font-bold">STACKER</span>
       </div>
 
-      <div class="flex justify-center pt-1">
-        <button class="bg-blue-600 hover:bg-blue-800 text-white font-bold py-1 px-2 rounded-xl" @click="reset">
-          Reset
-        </button>
-      </div>
-    </div>
+      <div class="bg-stackGap border-stackBack border pt-0.5">
 
-    <div v-else class="flex justify-center">
-      <button class="text-white font-bold py-2 px-4 rounded-2xl text-xl" @click="stopCRow" :class="{
+        <div :id="'grid-' + (y - 1)" v-for="y in height" :key="y" :class="getColHeight()" class="mb-0.5">
+          <div class="bg-stackBack inline-flex ml-0.5" :class="getCubeSize()" v-for="x in width" :key="x"
+               :id="(y - 1) + '-' + x"/>
+        </div>
+
+      </div>
+
+      <div class="pt-3 pb-3">
+        <div v-if="showEndScreen" :key="showEndScreen">
+          <div class="flex justify-center">
+            <span class="text-white text-xl font-bold">{{ endText }}</span>
+          </div>
+
+          <div class="flex justify-center pt-1">
+            <button class="bg-blue-600 hover:bg-blue-800 text-white font-bold py-1 px-2 rounded-xl" @click="reset">
+              Reset
+            </button>
+          </div>
+        </div>
+
+        <div v-else>
+          <div class="flex justify-center">
+            <button class="text-white font-bold py-2 px-4 rounded-2xl text-xl" @click="stopCRow" :class="{
         'bg-blue-500 hover:bg-blue-600' : !pauseButton,
         'bg-blue-900' : pauseButton,
         }">
-        Stack!
-      </button>
+              {{ stackText }}
+            </button>
+          </div>
+
+        </div>
+
+        <div class="flex justify-center pt-3">
+          <button class="text-white font-bold px-2 py-1 rounded-xl bg-red-600 hover:bg-red-800" @click="showSettings">
+            {{ settingsText }}
+          </button>
+        </div>
+
+      </div>
     </div>
 
   </div>
 
 
+  <div class="" v-if="showSettingsScreen" :key="showSettingsScreen">
+
+    <div class="flex justify-center items-center">
+      <span class="text-white mb-1 pr-1">Size:</span>
+      <input type="range" min="1" max="3" class="slider w-24" id="sizeSlider" v-model="settingsGameSize">
+    </div>
+
+    <div class="flex justify-center items-center pt-1">
+      <span class="text-white mb-1 pr-1">Width:</span>
+      <input type="range" min="5" max="12" class="slider w-24" id="widthSlider" v-model="settingsWidth">
+    </div>
+
+    <div class="flex justify-center items-center pt-1">
+      <span class="text-white mb-1 pr-1">Height:</span>
+      <input type="range" min="10" max="20" class="slider w-24" id="heightSlider"  v-model="settingsHeight">
+    </div>
+  </div>
 </template>
 
 <script>
 export default {
   name: "StackerWindow",
-  props: {
-    height: {
-      type: Number,
-      default: 15
-    },
-    width: {
-      type: Number,
-      default: 7
-    },
-  },
   data() {
     return {
       // Size Data
-      cubeSize: 10,
+      height: 15,
+      width: 7,
+      cubeSize: 6,
       gameSize: 20,
       wVal: 0.25,
 
       // Core game data
+      resetWindow: false,
       gameBoard: null,
       gameCenter: 0,
       cRowSize: 3,
@@ -73,42 +94,41 @@ export default {
       pauseButton: false,
       blinkCounter: 0,
       endText: "GAME OVER",
+      stackText: "Stack!",
+      settingsText: "Settings",
 
       // Positions
       cStart: 0,
       cLevel: 0,
       cRight: true,
+
+      // Demo vars
+      dPos: 0,
+      dContents: null,
+      inDemo: true,
+
+      // Settings
+      showSettingsScreen: false,
+      settingsGameSize: 1,
+      settingsHeight: 15,
+      settingsWidth: 7,
     }
   },
   mounted() {
     // Map board to 2D array
-    this.gameBoard = [];
-
-    for (let x = 0; x < this.height; x++) {
-      let row = [];
-
-      for (let y = 0; y < (this.width + 2); y++) {
-        row.push(0);
-      }
-      this.gameBoard.push(row);
-    }
+    this.resetBoard();
 
     this.gameCenter = Math.round(this.width / 2);
     this.cStart = this.gameCenter - 1;
 
-    this.gameBoard[this.height - 1][this.gameCenter - 1] = 1;
-    this.gameBoard[this.height - 1][this.gameCenter] = 1;
-    this.gameBoard[this.height - 1][this.gameCenter + 1] = 1;
-
-    this.displayFromArray(this.height - 1);
-
     this.gameSize = (this.width * (this.cubeSize + 0.70)) * this.wVal;
     document.getElementById('stackWindow').style.width = this.gameSize + "rem";
-    document.getElementById('stackButt').style.width = this.gameSize + "rem";
 
     this.cLevel = this.height - 1;
 
-    this.runGame();
+    // this.runGame();
+    this.stackText = "Start";
+    this.runDemo();
   },
   methods: {
     moveCRow() {
@@ -149,6 +169,12 @@ export default {
     },
     stopCRow() {
       if (this.pauseButton) return;
+      if (this.inDemo) {
+        this.runGame(true);
+        this.inDemo = false;
+
+        return;
+      }
 
       this.pauseButton = true;
       this.stopInterval();
@@ -221,6 +247,10 @@ export default {
       let elem = this.convertToId(y, x);
       let cube = document.getElementById(elem);
 
+      if (cube == null){
+        return;
+      }
+
       if (active) {
         cube.classList.replace('bg-stackBack', 'bg-stackFor');
       } else {
@@ -256,6 +286,8 @@ export default {
           this.displayFromArray(this.cLevel + 1);
 
           this.runGame();
+        } else {
+          this.showEndScreen = true;
         }
       }
     },
@@ -268,18 +300,33 @@ export default {
     },
     stopInterval() {
       clearInterval(this.timerInterval);
+
+      this.dPos = 0;
     },
     convertToId(y, x) {
       return y + "-" + x;
     },
-    getColWidth() {
-      return "grid-cols-" + this.width;
+    getColHeight() {
+      return "h-" + this.cubeSize;
     },
     getCubeSize() {
       return "w-" + this.cubeSize + " h-" + this.cubeSize;
     },
-    runGame() {
+    runGame(init = false) {
       this.stopInterval();
+
+      if (init) {
+        this.resetBoard();
+
+        this.stackText = "Stack!";
+        this.settingsText = "Stop";
+
+        this.gameBoard[this.height - 1][this.gameCenter - 1] = 1;
+        this.gameBoard[this.height - 1][this.gameCenter] = 1;
+        this.gameBoard[this.height - 1][this.gameCenter + 1] = 1;
+
+        this.displayFromArray(this.height - 1);
+      }
 
       this.timerInterval = setInterval(() => {
         this.moveCRow();
@@ -329,13 +376,7 @@ export default {
       }
     },
     reset() {
-      for (let x = 0; x < this.height; x++) {
-        for (let y = 0; y < (this.width + 2); y++) {
-          this.gameBoard[x][y] = 0;
-        }
-
-        this.displayFromArray(x);
-      }
+      this.resetBoard();
 
       this.cLevel = this.height - 1;
       this.cStart = this.gameCenter - 1;
@@ -351,6 +392,9 @@ export default {
 
       this.showEndScreen = false;
       this.runGame();
+
+      this.endText = "GAME OVER";
+      this.stackText = "Stack!";
     },
     printBoard() {
       console.clear();
@@ -369,6 +413,189 @@ export default {
 
       console.log("cStart: " + this.cStart);
       console.log("cRowSize: " + this.cRowSize);
+    },
+    resetBoard() {
+      this.gameBoard = [];
+
+      for (let x = 0; x < this.height; x++) {
+        let row = [];
+
+        for (let y = 0; y < (this.width + 2); y++) {
+          row.push(0);
+        }
+        this.gameBoard.push(row);
+
+        this.displayFromArray(x);
+      }
+    },
+
+    // DEMO Functions
+    runDemo() {
+      this.stopInterval();
+      this.resetBoard();
+
+      this.dContents = [
+        [1, 1, 1],
+        [1, 0, 0],
+        [1, 1, 1],
+        [0, 0, 1],
+        [1, 1, 1],
+        [0, 0, 0],
+
+        [1, 1, 1],
+        [0, 1, 0],
+        [0, 1, 0],
+        [0, 1, 0],
+        [0, 1, 0],
+        [0, 0, 0],
+
+        [1, 1, 1],
+        [1, 0, 1],
+        [1, 1, 1],
+        [1, 0, 1],
+        [1, 0, 1],
+        [0, 0, 0],
+
+        [1, 1, 1],
+        [1, 0, 0],
+        [1, 0, 0],
+        [1, 0, 0],
+        [1, 1, 1],
+        [0, 0, 0],
+
+        [1, 0, 1],
+        [1, 1, 0],
+        [1, 1, 0],
+        [1, 0, 1],
+        [1, 0, 1],
+        [0, 0, 0],
+
+        [1, 1, 1],
+        [1, 0, 0],
+        [1, 1, 1],
+        [1, 0, 0],
+        [1, 1, 1],
+        [0, 0, 0],
+
+        [1, 1, 0],
+        [1, 0, 1],
+        [1, 1, 0],
+        [1, 0, 1],
+        [1, 0, 1],
+        [0, 0, 0],
+
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+      ]
+
+      this.timerInterval = setInterval(() => {
+        this.advanceDemo();
+      }, 500);
+    },
+    advanceDemo() {
+      let w = Math.round(this.width / 2) - 1;
+      let h = this.height - 1;
+
+      // Loop through the entire board and set each content to the bottom
+      for (let x = 0; x < h; x++) {
+        this.gameBoard[x] = Array.from(this.gameBoard[x + 1]);
+        this.displayFromArray(x);
+      }
+
+      // set the bottom line
+      this.gameBoard[h][w] = this.dContents[this.dPos][0];
+      this.gameBoard[h][w + 1] = this.dContents[this.dPos][1];
+      this.gameBoard[h][w + 2] = this.dContents[this.dPos][2];
+      this.displayFromArray(h);
+
+      if (this.dPos >= this.dContents.length - 1) {
+        this.dPos = 0
+      } else {
+        this.dPos++;
+      }
+    },
+
+    // Settings
+    showSettings() {
+      if (!this.inDemo){
+        this.reset();
+        this.stackText = "Start";
+        this.settingsText = "Settings";
+        this.pauseButton = false;
+
+        this.stopInterval();
+        this.resetBoard();
+        this.inDemo = true;
+
+        this.runDemo();
+
+        return;
+      }
+
+      this.showSettingsScreen = !this.showSettingsScreen;
+      this.settingsText = this.showSettingsScreen ? "Hide" : "Settings";
+
+      if (this.showSettingsScreen){
+        this.stopInterval();
+        this.pauseButton = true;
+
+      }else{
+        this.runDemo();
+        this.pauseButton = false;
+      }
+    },
+    reloadWindow() {
+      this.resetWindow = !this.resetWindow;
+    }
+  },
+  watch: {
+    settingsGameSize() {
+      // 1 small, 2 med, 3 big
+      switch (Number(this.settingsGameSize)) {
+        case 1:
+          this.cubeSize = 6;
+          break;
+        case 2:
+          this.cubeSize = 10;
+          break;
+        case 3:
+          this.cubeSize = 16;
+          break;
+        default:
+          this.cubeSize = 6;
+          break;
+      }
+
+      this.gameSize = (this.width * (this.cubeSize + 0.70)) * this.wVal;
+      document.getElementById('stackWindow').style.width = this.gameSize + "rem";
+
+      this.reloadWindow();
+     },
+    settingsWidth() {
+      this.width = Number(this.settingsWidth);
+
+      this.gameCenter = Math.round(this.width / 2);
+      this.cStart = this.gameCenter - 1;
+
+      this.gameSize = (this.width * (this.cubeSize + 0.70)) * this.wVal;
+      document.getElementById('stackWindow').style.width = this.gameSize + "rem";
+
+      this.resetBoard();
+
+      this.reloadWindow();
+    },
+    settingsHeight() {
+      console.log(this.settingsHeight);
+
+      this.height = Number(this.settingsHeight);
+      this.cLevel = this.height - 1;
+
+      this.resetBoard();
+
+      this.reloadWindow();
     },
   }
 }

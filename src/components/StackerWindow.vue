@@ -5,14 +5,17 @@
       <span class="text-white text-2xl font-bold">STACKER</span>
     </div>
 
-    <div class="pt-0.5 border border-gray-900" :class="bgGap">
+    <div class="flex justify-center">
+      <div class="pt-0.5 border border-gray-900" :class="bgGap">
 
-      <div :id="'grid-' + (y - 1)" v-for="y in height" :key="y" :class="getColHeight()" class="mb-0.5 mr-0.5">
-        <div class="inline-block ml-0.5" :class="getCubeSize() + ' ' + this.bgBack" v-for="x in width" :key="x"
-             :id="(y - 1) + '-' + x"/>
+        <div :id="'grid-' + (y - 1)" v-for="y in height" :key="y" :class="getColHeight()" class="mb-0.5 mr-0.5">
+          <div class="inline-block ml-0.5" :class="getCubeSize() + ' ' + this.bgBack" v-for="x in width" :key="x"
+               :id="(y - 1) + '-' + x"/>
+        </div>
+
       </div>
-
     </div>
+
 
     <div class="pt-3 pb-3">
       <div v-if="showEndScreen" :key="showEndScreen">
@@ -21,7 +24,7 @@
         </div>
 
         <div class="flex justify-center pt-1">
-          <button class="text-white font-bold px-2 py-1 rounded-xl" @click="reset" :class="getButtonColour()">
+          <button class="text-white font-bold px-3 py-2 rounded-xl" @click="reset" :class="getButtonColour()">
             Reset
           </button>
         </div>
@@ -37,8 +40,8 @@
 
       </div>
 
-      <div class="flex justify-center pt-3">
-        <button class="text-white font-bold px-2 py-1 rounded-xl" @click="showSettings" :class="getButtonColour()">
+      <div class="flex justify-center pt-4">
+        <button class="text-white font-bold px-3 py-2 rounded-xl" @click="showSettings" :class="getButtonColour()">
           {{ settingsText }}
         </button>
       </div>
@@ -48,7 +51,7 @@
   </div>
 
 
-  <div class="w-full" v-if="showSettingsScreen" :key="showSettingsScreen">
+  <div v-if="showSettingsScreen" :key="showSettingsScreen">
 
     <div class="flex justify-center items-center">
       <span class="text-white mb-1 pr-1">Size:</span>
@@ -72,8 +75,9 @@
 
     <div class="flex justify-center items-center pt-1">
       <span class="text-white mb-1 pr-1">Difficulty:</span>
-      <input type="range" min="1" max="9" class="slider w-24" id="diffSlider" v-model="settingsTimerBaseSpeed">
+      <input type="range" min="1" max="9" class="slider w-24 " id="diffSlider" v-model="settingsTimerBaseSpeed">
     </div>
+
 
   </div>
 </template>

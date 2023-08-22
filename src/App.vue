@@ -1,10 +1,7 @@
 <template>
 
-  <div class="bg-darkBg h-full min-h-screen">
 
     <HomeView />
-
-  </div>
 
 </template>
 

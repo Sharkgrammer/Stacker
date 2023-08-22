@@ -1,62 +1,58 @@
 <template>
 
   <div :key="resetWindow">
-    <div id="stackWindow">
-      <div class="flex justify-center">
-        <span class="text-white text-2xl font-bold">STACKER</span>
+    <div class="flex justify-center">
+      <span class="text-white text-2xl font-bold">STACKER</span>
+    </div>
+
+    <div class="pt-0.5 border border-gray-900" :class="bgGap">
+
+      <div :id="'grid-' + (y - 1)" v-for="y in height" :key="y" :class="getColHeight()" class="mb-0.5 mr-0.5">
+        <div class="inline-block ml-0.5" :class="getCubeSize() + ' ' + this.bgBack" v-for="x in width" :key="x"
+             :id="(y - 1) + '-' + x"/>
       </div>
 
-      <div class="bg-stackGap border-stackBack border pt-0.5">
+    </div>
 
-        <div :id="'grid-' + (y - 1)" v-for="y in height" :key="y" :class="getColHeight()" class="mb-0.5">
-          <div class="bg-stackBack inline-flex ml-0.5" :class="getCubeSize()" v-for="x in width" :key="x"
-               :id="(y - 1) + '-' + x"/>
+    <div class="pt-3 pb-3">
+      <div v-if="showEndScreen" :key="showEndScreen">
+        <div class="flex justify-center">
+          <span class="text-white text-xl font-bold">{{ endText }}</span>
         </div>
 
+        <div class="flex justify-center pt-1">
+          <button class="text-white font-bold px-2 py-1 rounded-xl" @click="reset" :class="getButtonColour()">
+            Reset
+          </button>
+        </div>
       </div>
 
-      <div class="pt-3 pb-3">
-        <div v-if="showEndScreen" :key="showEndScreen">
-          <div class="flex justify-center">
-            <span class="text-white text-xl font-bold">{{ endText }}</span>
-          </div>
-
-          <div class="flex justify-center pt-1">
-            <button class="bg-blue-600 hover:bg-blue-800 text-white font-bold py-1 px-2 rounded-xl" @click="reset">
-              Reset
-            </button>
-          </div>
-        </div>
-
-        <div v-else>
-          <div class="flex justify-center">
-            <button class="text-white font-bold py-2 px-4 rounded-2xl text-xl" @click="stopCRow" :class="{
-        'bg-blue-500 hover:bg-blue-600' : !pauseButton,
-        'bg-blue-900' : pauseButton,
-        }">
-              {{ stackText }}
-            </button>
-          </div>
-
-        </div>
-
-        <div class="flex justify-center pt-3">
-          <button class="text-white font-bold px-2 py-1 rounded-xl bg-red-600 hover:bg-red-800" @click="showSettings">
-            {{ settingsText }}
+      <div v-else>
+        <div class="flex justify-center" :key="pauseButton">
+          <button class="text-white font-bold w-20 h-20 rounded-full text-xl" @click="stopCRow"
+                  :class="getButtonColourPause()">
+            {{ stackText }}
           </button>
         </div>
 
       </div>
+
+      <div class="flex justify-center pt-3">
+        <button class="text-white font-bold px-2 py-1 rounded-xl" @click="showSettings" :class="getButtonColour()">
+          {{ settingsText }}
+        </button>
+      </div>
+
     </div>
 
   </div>
 
 
-  <div class="" v-if="showSettingsScreen" :key="showSettingsScreen">
+  <div class="w-full" v-if="showSettingsScreen" :key="showSettingsScreen">
 
     <div class="flex justify-center items-center">
       <span class="text-white mb-1 pr-1">Size:</span>
-      <input type="range" min="1" max="3" class="slider w-24" id="sizeSlider" v-model="settingsGameSize">
+      <input type="range" min="1" max="6" class="slider w-24" id="sizeSlider" v-model="settingsGameSize">
     </div>
 
     <div class="flex justify-center items-center pt-1">
@@ -66,8 +62,19 @@
 
     <div class="flex justify-center items-center pt-1">
       <span class="text-white mb-1 pr-1">Height:</span>
-      <input type="range" min="10" max="20" class="slider w-24" id="heightSlider"  v-model="settingsHeight">
+      <input type="range" min="10" max="20" class="slider w-24" id="heightSlider" v-model="settingsHeight">
     </div>
+
+    <div class="flex justify-center items-center pt-1">
+      <span class="text-white mb-1 pr-1">Theme:</span>
+      <input type="range" min="1" max="7" class="slider w-24" id="themeSlider" v-model="settingsTheme">
+    </div>
+
+    <div class="flex justify-center items-center pt-1">
+      <span class="text-white mb-1 pr-1">Difficulty:</span>
+      <input type="range" min="1" max="9" class="slider w-24" id="diffSlider" v-model="settingsTimerBaseSpeed">
+    </div>
+
   </div>
 </template>
 
@@ -80,7 +87,6 @@ export default {
       height: 15,
       width: 7,
       cubeSize: 6,
-      gameSize: 20,
       wVal: 0.25,
 
       // Core game data
@@ -88,14 +94,18 @@ export default {
       gameBoard: null,
       gameCenter: 0,
       cRowSize: 3,
-      timerTick: 350,
-      timerInterval: null,
       showEndScreen: false,
       pauseButton: false,
       blinkCounter: 0,
       endText: "GAME OVER",
       stackText: "Stack!",
       settingsText: "Settings",
+
+      // Timer
+      timerInterval: null,
+      timerTick: 350,
+      timerBaseSpeed: 350,
+      timerSpeedAdj: 0,
 
       // Positions
       cStart: 0,
@@ -112,6 +122,13 @@ export default {
       settingsGameSize: 1,
       settingsHeight: 15,
       settingsWidth: 7,
+      settingsTimerBaseSpeed: 5,
+      settingsTheme: 1,
+
+      // Theme
+      bgBack: "bg-stackBack",
+      bgFor: "bg-stackFor",
+      bgGap: "bg-stackGap",
     }
   },
   mounted() {
@@ -120,9 +137,6 @@ export default {
 
     this.gameCenter = Math.round(this.width / 2);
     this.cStart = this.gameCenter - 1;
-
-    this.gameSize = (this.width * (this.cubeSize + 0.70)) * this.wVal;
-    document.getElementById('stackWindow').style.width = this.gameSize + "rem";
 
     this.cLevel = this.height - 1;
 
@@ -247,14 +261,14 @@ export default {
       let elem = this.convertToId(y, x);
       let cube = document.getElementById(elem);
 
-      if (cube == null){
+      if (cube == null) {
         return;
       }
 
       if (active) {
-        cube.classList.replace('bg-stackBack', 'bg-stackFor');
+        cube.classList.replace(this.bgBack, this.bgFor);
       } else {
-        cube.classList.replace('bg-stackFor', 'bg-stackBack');
+        cube.classList.replace(this.bgFor, this.bgBack);
       }
 
     },
@@ -335,34 +349,24 @@ export default {
     upDifficulty() {
       let ind = ((this.height - 1) - this.cLevel) / (this.height - 1);
 
-      // This could probably increase the speed based on percentage but eh
+      // The closer ind is to 1, the closer it is to the top
 
-      if (ind > 0.84) {
-        this.timerTick = 50;
-      } else if (ind > 0.72) {
-        this.timerTick = 75;
-      } else if (ind > 0.55) {
-        this.timerTick = 100;
+      this.timerTick = Math.max(this.timerBaseSpeed * (1 - ind), 50 * (1 - this.timerSpeedAdj));
 
+      let adj = this.timerSpeedAdj / 2;
+
+      if (ind > (0.60 - adj)) {
         if (this.cRowSize === 2) {
           this.gameBoard[this.cLevel - 1][this.cStart + this.cRowSize - 1] = 0;
 
           this.cRowSize--;
         }
-      } else if (ind > 0.42) {
-        this.timerTick = 150;
-      } else if (ind > 0.25) {
-        this.timerTick = 200;
-
+      } else if (ind > (0.25 - adj)) {
         if (this.cRowSize === 3) {
           this.gameBoard[this.cLevel - 1][this.cStart + this.cRowSize - 1] = 0;
 
           this.cRowSize--;
         }
-      } else if (ind > 0.14) {
-        this.timerTick = 250;
-      } else if (ind > 0.06) {
-        this.timerTick = 300;
       }
     },
     stopGame(death) {
@@ -464,7 +468,7 @@ export default {
         [0, 0, 0],
 
         [1, 0, 1],
-        [1, 1, 0],
+        [1, 0, 1],
         [1, 1, 0],
         [1, 0, 1],
         [1, 0, 1],
@@ -520,7 +524,7 @@ export default {
 
     // Settings
     showSettings() {
-      if (!this.inDemo){
+      if (!this.inDemo) {
         this.reset();
         this.stackText = "Start";
         this.settingsText = "Settings";
@@ -538,62 +542,117 @@ export default {
       this.showSettingsScreen = !this.showSettingsScreen;
       this.settingsText = this.showSettingsScreen ? "Hide" : "Settings";
 
-      if (this.showSettingsScreen){
+      if (this.showSettingsScreen) {
         this.stopInterval();
         this.pauseButton = true;
 
-      }else{
+      } else {
         this.runDemo();
         this.pauseButton = false;
       }
     },
     reloadWindow() {
       this.resetWindow = !this.resetWindow;
+    },
+    getButtonColour() {
+      return this.bgBack + " hover:" + this.bgGap;
+    },
+    getButtonColourPause() {
+      if (this.pauseButton) {
+        return this.bgBack;
+      } else {
+        return this.getButtonColour();
+      }
     }
   },
   watch: {
     settingsGameSize() {
-      // 1 small, 2 med, 3 big
-      switch (Number(this.settingsGameSize)) {
-        case 1:
-          this.cubeSize = 6;
-          break;
-        case 2:
-          this.cubeSize = 10;
-          break;
-        case 3:
-          this.cubeSize = 16;
-          break;
-        default:
-          this.cubeSize = 6;
-          break;
-      }
-
-      this.gameSize = (this.width * (this.cubeSize + 0.70)) * this.wVal;
-      document.getElementById('stackWindow').style.width = this.gameSize + "rem";
+      let newSize = 4;
+      this.cubeSize = newSize + (Number(this.settingsGameSize) * 2);
 
       this.reloadWindow();
-     },
+    },
     settingsWidth() {
       this.width = Number(this.settingsWidth);
 
       this.gameCenter = Math.round(this.width / 2);
       this.cStart = this.gameCenter - 1;
 
-      this.gameSize = (this.width * (this.cubeSize + 0.70)) * this.wVal;
-      document.getElementById('stackWindow').style.width = this.gameSize + "rem";
-
       this.resetBoard();
-
       this.reloadWindow();
     },
     settingsHeight() {
-      console.log(this.settingsHeight);
-
       this.height = Number(this.settingsHeight);
       this.cLevel = this.height - 1;
 
       this.resetBoard();
+      this.reloadWindow();
+    },
+    settingsTimerBaseSpeed() {
+      this.settingsTimerBaseSpeed = Number(this.settingsTimerBaseSpeed);
+
+      let control = this.settingsTimerBaseSpeed - 5;
+      let adj = (control * 20) / 100;
+
+      this.timerBaseSpeed = 350 - (200 * adj);
+      this.timerSpeedAdj = adj;
+
+      this.timerTick = this.timerBaseSpeed;
+    },
+    settingsTheme() {
+      let oldBack = this.bgBack, oldFor = this.bgFor;
+      let nBack, nFor, nGap;
+      switch (Number(this.settingsTheme)) {
+        case 1:
+          nBack = "bg-stackBack";
+          nFor = "bg-stackFor";
+          nGap = "bg-stackGap";
+          break;
+        case 2:
+          nBack = "bg-red-900";
+          nFor = "bg-red-300";
+          nGap = "bg-red-700";
+          break;
+        case 3:
+          nBack = "bg-purple-900";
+          nFor = "bg-purple-300";
+          nGap = "bg-purple-700";
+          break;
+        case 4:
+          nBack = "bg-green-900";
+          nFor = "bg-green-300";
+          nGap = "bg-green-700";
+          break;
+        case 5:
+          nBack = "bg-pink-900";
+          nFor = "bg-pink-300";
+          nGap = "bg-pink-700";
+          break;
+        case 6:
+          nBack = "bg-yellow-900";
+          nFor = "bg-yellow-300";
+          nGap = "bg-yellow-700";
+          break;
+        case 7:
+          nBack = "bg-gray-900";
+          nFor = "bg-gray-300";
+          nGap = "bg-gray-700";
+          break;
+      }
+
+      this.bgBack = nBack;
+      this.bgFor = nFor;
+      this.bgGap = nGap;
+
+      for (let y = 1; y < this.gameBoard.length; y++) {
+        for (let x = 1; x < this.gameBoard[y].length - 1; x++) {
+          let id = this.convertToId(y, x);
+          let cube = document.getElementById(id);
+
+          cube.classList.replace(oldBack, this.bgBack);
+          cube.classList.replace(oldFor, this.bgFor);
+        }
+      }
 
       this.reloadWindow();
     },

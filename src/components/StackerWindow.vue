@@ -78,11 +78,27 @@
       <input type="range" min="1" max="9" class="slider w-24 " id="diffSlider" v-model="settingsTimerBaseSpeed">
     </div>
 
+    <div class="flex justify-center items-center pt-2">
+      <button class="text-white font-bold px-3 py-2 rounded-xl mr-2" @click="muteSound" :class="getButtonColour()">
+        {{ settingsMuteText }}
+      </button>
+
+      <button class="text-white font-bold px-3 py-2 rounded-xl ml-2" @click="resetSettings" :class="getButtonColour()">
+        Reset
+      </button>
+    </div>
+
 
   </div>
 </template>
 
 <script>
+import soundMove from "../assets/move.mp3";
+import soundBlink from "../assets/blinking.mp3";
+import soundWin from "../assets/win.mp3";
+import soundGameOver from "../assets/gameover.mp3";
+
+
 export default {
   name: "StackerWindow",
   data() {
@@ -104,7 +120,7 @@ export default {
       endText: "GAME OVER",
       stackText: "Stack!",
       settingsText: "Settings",
-
+      settingsMuteText: "Mute",
       // Timer
       timerInterval: null,
       timerTick: 350,
@@ -128,6 +144,7 @@ export default {
       settingsWidth: 7,
       settingsTimerBaseSpeed: 5,
       settingsTheme: 1,
+      settingsMute: false,
 
       // Theme
       bgBack: "bg-stackBack",
@@ -144,14 +161,30 @@ export default {
 
     this.cLevel = this.height - 1;
 
-    // this.runGame();
     this.stackText = "Start";
+
+    // Get settings from vuex store
+    this.settingsGameSize = this.$store.getters.settingsGameSize;
+    this.settingsHeight = this.$store.getters.settingsHeight;
+    this.settingsWidth = this.$store.getters.settingsWidth;
+    this.settingsTimerBaseSpeed = this.$store.getters.settingsTimerBaseSpeed;
+    this.settingsTheme = this.$store.getters.settingsTheme;
+    this.settingsMute = this.$store.getters.settingsMute;
+
+    // Manually set mute text. This could be more automatic but for such a small button i don't think there is a point
+    this.settingsMuteText = this.settingsMute ? "Unmute" : "Mute";
+
+    this.reloadWindow();
+
+    // Finally start demo code
     this.runDemo();
   },
   methods: {
     moveCRow() {
       if (this.pauseButton) this.pauseButton = false;
       if (this.cRowSize === 0) this.stopInterval();
+
+      this.playSound(soundMove);
 
       if (this.cRight) {
         this.gameBoard[this.cLevel][this.cStart] = 0;
@@ -197,14 +230,17 @@ export default {
       this.pauseButton = true;
       this.stopInterval();
 
-      if (this.gameBoard[this.cLevel][0] === 1 || this.gameBoard[this.cLevel][this.width + 1] === 1) {
-        this.cRowSize -= 1;
-      }
-
       this.cRight = Math.random() >= 0.5;
 
       // If you're on the lowest level, return
       if (this.cLevel === this.height - 1) {
+
+        // We only need to actually check if the cRow is out of bounds once.
+        // Otherwise the checker gets it
+        if (this.gameBoard[this.cLevel][0] === 1 || this.gameBoard[this.cLevel][this.width + 1] === 1) {
+          this.cRowSize -= 1;
+        }
+
         this.cLevel--;
 
         this.genRandomCRow(this.cLevel);
@@ -282,7 +318,6 @@ export default {
       this.timerInterval = setInterval(() => {
         this.blinkCubes(cubes, level);
       }, 300);
-
     },
     blinkCubes(cubes, level) {
 
@@ -291,6 +326,12 @@ export default {
       }
 
       this.displayFromArray(level);
+
+      if (this.blinkCounter % 2 === 0) {
+        if (this.cRowSize > 0) {
+          this.playSound(soundBlink);
+        }
+      }
 
       if (this.blinkCounter++ >= 7) {
         this.stopInterval();
@@ -378,8 +419,11 @@ export default {
       this.showEndScreen = true;
 
       if (death) {
+        this.playSound(soundGameOver);
         this.endText = "GAME OVER";
+
       } else {
+        this.playSound(soundWin);
         this.endText = "YOU WIN";
       }
     },
@@ -567,6 +611,30 @@ export default {
       } else {
         return this.getButtonColour();
       }
+    },
+    playSound(sound) {
+      if (this.settingsMute) return;
+
+      let audio = new Audio(sound);
+      audio.play();
+    },
+    muteSound() {
+      this.settingsMute = !this.settingsMute;
+
+      this.settingsMuteText = this.settingsMute ? "Unmute" : "Mute";
+    },
+    resetSettings() {
+      // In theory this could reset the store and force a component reload
+      // Buttttt I don't want to make it flash / slightly lazy
+      // Sorry
+      this.settingsGameSize = 1;
+      this.settingsHeight = 15;
+      this.settingsWidth = 7;
+      this.settingsTimerBaseSpeed = 5;
+      this.settingsTheme = 1;
+      this.settingsMute = false;
+
+      this.settingsMuteText = "Mute";
     }
   },
   watch: {
@@ -575,6 +643,8 @@ export default {
       this.cubeSize = newSize + (Number(this.settingsGameSize) * 2);
 
       this.reloadWindow();
+
+      this.$store.commit("setGameSize", this.settingsGameSize);
     },
     settingsWidth() {
       this.width = Number(this.settingsWidth);
@@ -584,6 +654,8 @@ export default {
 
       this.resetBoard();
       this.reloadWindow();
+
+      this.$store.commit("setWidth", this.settingsWidth);
     },
     settingsHeight() {
       this.height = Number(this.settingsHeight);
@@ -591,6 +663,8 @@ export default {
 
       this.resetBoard();
       this.reloadWindow();
+
+      this.$store.commit("setHeight", this.settingsHeight);
     },
     settingsTimerBaseSpeed() {
       this.settingsTimerBaseSpeed = Number(this.settingsTimerBaseSpeed);
@@ -602,6 +676,8 @@ export default {
       this.timerSpeedAdj = adj;
 
       this.timerTick = this.timerBaseSpeed;
+
+      this.$store.commit("setTimerBaseSpeed", this.settingsTimerBaseSpeed);
     },
     settingsTheme() {
       let oldBack = this.bgBack, oldFor = this.bgFor;
@@ -659,6 +735,11 @@ export default {
       }
 
       this.reloadWindow();
+
+      this.$store.commit("setTheme", this.settingsTheme);
+    },
+    settingsMute() {
+      this.$store.commit("setMute", this.settingsMute);
     },
   }
 }

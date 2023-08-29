@@ -1,24 +1,15 @@
-# stacky
+# Stacker
 
-## Project setup
-```
-npm install
-```
+Just like the arcade machine. Except in Vue.js with some added settings and (hopefully) pizzazz
 
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
+Try it yourself [here!](https://sharkgrammer.github.io/Stacker/).
 
-### Compiles and minifies for production
-```
-npm run build
-```
 
-### Lints and fixes files
-```
-npm run lint
-```
+<div align="center">
+  <img src="https://media.giphy.com/media/FsP8g0EE4GToQVffeg/giphy.gif" width="30%" />
+  &nbsp; &nbsp; 
+  <img src="https://i.imgur.com/t8A2g9U.png" width="30%" />
+  &nbsp; &nbsp;
+  <img src="https://media.giphy.com/media/wwRwL6oXGMpVShLt9j/giphy.gif" width="30%" /> 
+</div>
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).

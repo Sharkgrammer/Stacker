@@ -297,7 +297,7 @@ export default {
       }
     },
     displayFromArray(level) {
-      for (let x = 0; x < this.width; x++) {
+      for (let x = 0; x < this.width + 1; x++) {
         this.setActive(level, x, this.gameBoard[level][x] === 1)
       }
     },

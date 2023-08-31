@@ -108,7 +108,6 @@ export default {
       height: 15,
       width: 7,
       cubeSize: 6,
-      wVal: 0.25,
 
       // Core game data
       resetWindow: false,
@@ -298,7 +297,7 @@ export default {
       }
     },
     displayFromArray(level) {
-      for (let x = 0; x < this.height; x++) {
+      for (let x = 0; x < this.width; x++) {
         this.setActive(level, x, this.gameBoard[level][x] === 1)
       }
     },

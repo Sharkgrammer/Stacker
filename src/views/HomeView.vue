@@ -4,7 +4,7 @@
 
     <div class="flex-grow -mt-1">
       <div class="flex justify-center">
-        <div class="pr-20 pl-20 pt-10 pb-10">
+        <div class="pt-5 pb-5 pl-2 pr-2">
           <StackerWindow/>
         </div>
       </div>

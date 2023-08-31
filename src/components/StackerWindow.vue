@@ -24,7 +24,8 @@
         </div>
 
         <div class="flex justify-center pt-1">
-          <button class="text-white font-bold px-3 py-2 rounded-xl" @click="reset" :class="getButtonColour()">
+          <button id="resetButton" class="text-white font-bold px-3 py-2 rounded-xl" @click="reset"
+                  :class="getButtonColour()">
             Reset
           </button>
         </div>
@@ -32,7 +33,7 @@
 
       <div v-else>
         <div class="flex justify-center" :key="pauseButton">
-          <button class="text-white font-bold w-20 h-20 rounded-full text-xl" @click="stopCRow"
+          <button id="stackButton" class="text-white font-bold w-20 h-20 rounded-full text-xl" @click="stopCRow"
                   :class="getButtonColourPause()">
             {{ stackText }}
           </button>
@@ -121,6 +122,7 @@ export default {
       stackText: "Stack!",
       settingsText: "Settings",
       settingsMuteText: "Mute",
+
       // Timer
       timerInterval: null,
       timerTick: 350,
@@ -156,6 +158,9 @@ export default {
     // Map board to 2D array
     this.resetBoard();
 
+    // Listen to space
+    document.addEventListener("keyup", this.handleSpace);
+
     this.gameCenter = Math.round(this.width / 2);
     this.cStart = this.gameCenter - 1;
 
@@ -178,6 +183,9 @@ export default {
 
     // Finally start demo code
     this.runDemo();
+  },
+  beforeUnmount() {
+    document.removeEventListener("keyup", this.handleSpace);
   },
   methods: {
     moveCRow() {
@@ -220,6 +228,7 @@ export default {
     },
     stopCRow() {
       if (this.pauseButton) return;
+
       if (this.inDemo) {
         this.runGame(true);
         this.inDemo = false;
@@ -635,6 +644,26 @@ export default {
       this.settingsMute = false;
 
       this.settingsMuteText = "Mute";
+    },
+    handleSpace(event) {
+      // For some reason, if the button doesn't have focus when stopCRow is called everything goes wonky
+      // So instead find the button, focus on it and then click it
+      if (event.keyCode === 32) {
+        let butt = null;
+
+        if (!this.pauseButton) {
+          butt = document.getElementById("stackButton");
+        }
+
+        if (this.showEndScreen) {
+          butt = document.getElementById("resetButton");
+        }
+
+        if (butt !== null) {
+          butt.focus();
+          butt.click();
+        }
+      }
     }
   },
   watch: {
@@ -747,4 +776,8 @@ export default {
 
 <style scoped>
 
+#stackButton:focus, #resetButton:focus {
+  outline: none;
+  box-shadow: none;
+}
 </style>
